@@ -11,11 +11,13 @@ coal_comb <- b[c,]  #91 coal-combustion related sources possible
 coal_comb_sel <- subset(NEI,NEI$SCC %in% coal_comb[,1]) #in US only 76 of these occur
 
 #How have PM2.5 emissions from these 76 coal-combustion related sources changed between 1999-2008 ?
-totals <- coal_comb_sel %>% mutate(year=as.factor(year)) %>% group_by(year) %>% summarise(sum(Emissions))
+library(dplyr)
+library(ggplot2)
+totals <- coal_comb_sel %>% mutate(year=as.factor(year)) %>% group_by(year) %>% summarise(mean(Emissions))
 names(totals) <- c("year","emission")
 png(filename="plot4.png", width=775, height=775)
-g <- ggplot(totals, aes(x=levels(year),y=emission/1000))
+g <- ggplot(totals, aes(x=levels(year),y=emission))
 g <- g + geom_bar(stat="identity",aes(fill="red"))+theme_bw()
-g <- g+labs(x="year",y="total PM2.5 emission (in K tons)",title="After 3 rather stable years, total PM2.5 emission from coal combustion declined with 40% between 1999 and 2008")
-g+geom_text(aes(label=round(emission/1000,1), size=3, hjust=0.5, vjust=1.5))+guides(fill=FALSE, size=FALSE)
+g <- g+labs(x="year",y="average PM2.5 emission (in tons)",title="On average PM2.5 emission from coal combustion declined with 60% between 1999 and 2008")
+g+geom_text(aes(label=round(emission,1), size=3, hjust=0.5, vjust=1.5))+guides(fill=FALSE, size=FALSE)
 dev.off()

@@ -2,17 +2,21 @@
 #1. Check if inputfiles are present and if so, read them in
 if (file.exists("./summarySCC_PM25.rds")) {NEI <- readRDS("summarySCC_PM25.rds")}
 if (file.exists("./Source_Classification_Code.rds")) {SCC <- readRDS("Source_Classification_Code.rds")}
+library(dplyr)
+library(ggplot2)
 
 #Select motor vehicle emission sources from Baltimore City
 a <- grepl("motor",tolower(SCC$Short.Name))
-b <- SCC[a,c(1,3)]
-motor <- b[c,]  #138 sources
-motor_sel <- subset(NEI,NEI$SCC %in% motor[,1] & fips=="24510") #in Baltimore only 24 of these occur
-motor_sel_base <- subset(motor_sel,year==1999)
+motor <- SCC[a,c(1,3)] #138 sources
+motor_sel <- subset(NEI,NEI$SCC %in% motor[,1] & fips=="24510") #in Baltimore only 34 of these occur
 
 #How did motor vehicle emissions evolved in Baltimore City between 1999 and 2008
-png(filename="plot5.png",height=600,width=600)
-par(cex.main=0.9)
-boxplot(data=motor_sel,motor_sel$Emissions~motor_sel$year,main="After an initial strong decline, in 2008 the median PM2.5 emission nearly returned to its 1999-level", xlab="year", ylab="PM2.5 emission (tons)")
-abline(h=median(motor_sel_base$Emissions),col='red', lwd=2, lty=2)
+totals <- motor_sel %>% mutate(year=as.factor(year)) %>% group_by(year) %>% summarise(mean(Emissions))
+names(totals) <- c("year","emission")
+
+png(filename="plot5.png",height=850,width=850)
+g <- ggplot(totals, aes(x=levels(year),y=emission))
+g <- g + geom_bar(stat="identity",aes(fill="red"))+theme_bw()
+g <- g+labs(x="year",y="mean PM2.5 emission (in tons)",title="After a strong increase, in 2008 total PM2.5 emission from coal combustion declined again slightly under its original level of 1999")
+g+geom_text(aes(label=round(emission,2), size=3, hjust=0.5, vjust=1.5))+guides(fill=FALSE, size=FALSE)
 dev.off()
